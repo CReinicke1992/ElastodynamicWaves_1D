@@ -8,7 +8,7 @@ Created on Fri Dec  1 14:07:23 2017
 
 import numpy as np
 import matplotlib.pylab as plt
-test
+
 class Wavefield_p_w:
     """
     Wavefield_p_w
@@ -315,15 +315,17 @@ class Wavefield_p_w:
         return array
     
     # Transform wavefield from w-kx-domain to t-x-domain
-    def WP2TP(self,array,eps=0,taperlen=0,threshold=None,norm=None,zeropad=0,paddingtaper=None):
+    def WP2TP(self,array,eps=0,taperlen=0,threshold=None,norm=None,zeropad=0,paddingtaper=None,t1=None):
         """
         array_tx = WKx2TX(array,eps=0,taperlen=0)
         
         Input:
-            eps:      Gain factor.
-            taperlen: Length of cosine taper.
+            eps:            Gain factor.
+            taperlen:       Length of cosine taper.
             norm:
-            zeropad:  Set zeropad=1 to use zeropadding.
+            zeropad:        Set zeropad=1 to use zeropadding.
+            paddingtaper:   Length of taper for the zero padding (to avoid sharp edges).
+            t1:             Onset time of first arrival if before time zero (1x1 or 4x1). Only the earliest time will be taken into account.
         
         Output: 
             array_tp: Array in tp, fftsift and gain are applied.
@@ -351,23 +353,37 @@ class Wavefield_p_w:
             
         else:
             
+            if t1 is None:
+                fac = 1
+                shift = 0
+            else:
+                fac = 2
+                shift = 4*int(np.max(abs(t1))/self.dt)
+                
             if norm is None:
-                array_tp = 2*np.fft.ifft(array,n=2*self.nt,axis=0).real
+                array_tp = fac*2*np.fft.ifft(array,n=fac*2*self.nt,axis=0).real
             elif norm == 'ortho':
-                array_tp = 2*np.fft.ifft(array,n=2*self.nt,axis=0,norm='ortho').real
-            
-            
-            # Add taper to avoid that zero-padding introduces a strong amplitude jump
+                array_tp = fac*2*np.fft.ifft(array,n=fac*2*self.nt,axis=0,norm='ortho').real
+                    
+            # Construct taper array
             if paddingtaper is None:
                 paddingtaper = int(self.nt/16)
+            paddingtaper = fac*paddingtaper
             tap = np.zeros((paddingtaper+1,array.shape[1]))
             tap[:,0] = np.cos(np.linspace(-np.pi/2,0,paddingtaper+1))
             if array.shape[1] == 4:
                 tap = np.array([tap[:,0],tap[:,0],tap[:,0],tap[:,0]]).T
+            
+            # Apply taper to avoid that zero-padding introduces a strong amplitude jump
+            index = 2*fac*self.nt-shift
+            array_tp[index-paddingtaper:index,:] = array_tp[index-paddingtaper:index,:]*tap[:-1,:]
+            
+            # Set times before min(t1,0) equal to zero.
+            array_tp[fac*self.nt:index-paddingtaper,:] = 0
+            
+            # Remove fft-interpolated time samples
+            array_tp = array_tp[::2*fac,:]
                 
-            array_tp[2*self.nt-paddingtaper:,:] = array_tp[2*self.nt-paddingtaper:,:]*tap[:-1,:]
-            array_tp[self.nt:2*self.nt-paddingtaper,:] = 0
-            array_tp = array_tp[::2,:]
 
         array_tp = np.fft.fftshift(array_tp,0)
         array_tp = array_tp*gain
