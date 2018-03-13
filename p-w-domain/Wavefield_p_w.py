@@ -372,7 +372,7 @@ class Wavefield_p_w:
             if paddingtaper is None:
                 paddingtaper = int(self.nt/16)
             tap = np.zeros((paddingtaper+1,array.shape[1]))
-            tap[:,0] = np.cos(np.linspace(-np.pi/2,0,paddingtaper+1))
+            tap[:,0] = np.cos(np.linspace(-np.pi/2,0,paddingtaper+1))**2
             if array.shape[1] == 4:
                 tap = np.array([tap[:,0],tap[:,0],tap[:,0],tap[:,0]]).T
             
@@ -387,7 +387,7 @@ class Wavefield_p_w:
             # Construct taper array from latest time minus taperlength to latest time
             # Here I restrict the taperlength to 1/16 of nt to avoid significant scaling of the amplitudes at positive times
             paddingtaper = int(self.nt/16)
-            tap = np.zeros((paddingtaper+1,array.shape[1]))
+            tap = np.zeros((paddingtaper+1,array.shape[1]))**2
             tap[:,0] = np.cos(np.linspace(-np.pi/2,0,paddingtaper+1))
             if array.shape[1] == 4:
                 tap = np.array([tap[:,0],tap[:,0],tap[:,0],tap[:,0]]).T
