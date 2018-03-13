@@ -364,25 +364,25 @@ class Wavefield_p_w:
                 array_tp = fac*2*np.fft.ifft(array,n=fac*2*self.nt,axis=0).real
             elif norm == 'ortho':
                 array_tp = fac*2*np.fft.ifft(array,n=fac*2*self.nt,axis=0,norm='ortho').real
-                    
+            
+            # Remove fft-interpolated time samples
+            array_tp = array_tp[::2*fac,:]
+            
             # Construct taper array from minus taperlength to time zero
             if paddingtaper is None:
                 paddingtaper = int(self.nt/16)
-            paddingtaper = fac*paddingtaper
             tap = np.zeros((paddingtaper+1,array.shape[1]))
             tap[:,0] = np.cos(np.linspace(-np.pi/2,0,paddingtaper+1))
             if array.shape[1] == 4:
                 tap = np.array([tap[:,0],tap[:,0],tap[:,0],tap[:,0]]).T
             
             # Apply taper to avoid that zero-padding introduces a strong amplitude jump
-            index = 2*fac*self.nt-shift
+            index = self.nt-shift
             array_tp[index-paddingtaper:index,:] = array_tp[index-paddingtaper:index,:]*tap[:-1,:]
             
             # Set times before min(t1,0) equal to zero.
-            array_tp[fac*self.nt:index-paddingtaper,:] = 0
-            
-            # Remove fft-interpolated time samples
-            array_tp = array_tp[::2*fac,:]
+            nf = int(self.nt/2)+1
+            array_tp[nf-1:index-paddingtaper,:] = 0
             
             # Construct taper array from latest time minus taperlength to latest time
             # Here I restrict the taperlength to 1/16 of nt to avoid significant scaling of the amplitudes at positive times
@@ -393,8 +393,8 @@ class Wavefield_p_w:
                 tap = np.array([tap[:,0],tap[:,0],tap[:,0],tap[:,0]]).T
             
             # Apply taper to avoid that zero-padding introduces a strong amplitude jump
-            nf = int(self.nt/2)+1
-            array_tp[nf-paddingtaper:nf,:] = array_tp[nf-paddingtaper:nf,:]*tap[-2::-1,:]
+            array_tp[nf-2-paddingtaper:nf-2,:] = array_tp[nf-2-paddingtaper:nf-2,:]*tap[-2::-1,:]
+            array_tp[nf-2,:] = 0
                 
 
         array_tp = np.fft.fftshift(array_tp,0)
