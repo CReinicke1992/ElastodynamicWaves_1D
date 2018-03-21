@@ -616,9 +616,23 @@ class Layers_p_w(Wavefield_p_w):
                 # Inverse of tmp
                 M1 = self.My_inv(tmp)
                 
+                M1 = I.copy()
+                tmp = I.copy()
+                Q = self.Mul_My_dot(RM,W,rP,W)
+                for K in range(20):
+                    tmp = self.My_dot(tmp,Q)
+                    M1 = M1 + tmp
+                
                 tmp = I - self.Mul_My_dot(rP,W,RM,W)
                 # Inverse of tmp
                 M2 = self.My_inv(tmp)
+                
+                M2 = I.copy()
+                tmp = I.copy()
+                Q = self.Mul_My_dot(rP,W,RM,W)
+                for K in range(20):
+                    tmp = self.My_dot(tmp,Q)
+                    M1 = M1 + tmp
                 
             # Update reflection / transmission responses
             RP = RP + self.Mul_My_dot(TM,W,rP,W,M1,TP)
@@ -640,10 +654,10 @@ class Layers_p_w(Wavefield_p_w):
         TM = TM.conj()
         
         # Remove NaNs
-        RP = np.nan_to_num(RP)
-        TP = np.nan_to_num(TP)
-        RM = np.nan_to_num(RM)
-        TM = np.nan_to_num(TM)
+#        RP = np.nan_to_num(RP)
+#        TP = np.nan_to_num(TP)
+#        RM = np.nan_to_num(RM)
+#        TM = np.nan_to_num(TM)
         
         # Write full reflection and transmission matrices
         if sort == 1:
