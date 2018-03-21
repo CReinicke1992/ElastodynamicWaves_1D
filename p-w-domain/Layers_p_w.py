@@ -628,10 +628,10 @@ class Layers_p_w(Wavefield_p_w):
                 
     
         # The highest negative frequency and highest negative wavenumber components are real-valued
-        RP[self.nf-1,:] = RP[self.nf-1,:].real
-        TP[self.nf-1,:] = TP[self.nf-1,:].real
-        RM[self.nf-1,:] = RM[self.nf-1,:].real
-        TM[self.nf-1,:] = TM[self.nf-1,:].real
+#        RP[self.nf-1,:] = RP[self.nf-1,:].real
+#        TP[self.nf-1,:] = TP[self.nf-1,:].real
+#        RM[self.nf-1,:] = RM[self.nf-1,:].real
+#        TM[self.nf-1,:] = TM[self.nf-1,:].real
         
         # Conjugate wavefields
         RP = RP.conj()
