@@ -528,6 +528,130 @@ class Layers_p_w(Wavefield_p_w):
         
         return RP,TP,RM,TM
     
+    def Layercel_p_w_rfft(self,p,mul=1,conv=1,eps=None,sort=1):
+        """
+        R,T = Layercel_p_w(p,mul=1,conv=1,eps=None,sort=1)
+        Compute reflection / transmission response for a single ray-parameter and all frequencies.
+        
+        Inputs:
+            p:    Ray-parameter.
+            mul:  Set mul=1 to model internal multiples.
+            conv: Set conv=1 to model P/S conversions.
+            eps:  Set eps to add an imaginary constant to the frequency: w -> w + 1j*eps. This reduces the temporal wrap-around but one has to correct for this by multiplying the data by exp(eps*t) in the time domain.
+            sort: Set sort=1 (default) to get positive and negative frequencies and wavenumbers.
+        
+        Output:
+            RP: Reflection response from above (nf x 4), 1st element corresponds to zero frequency.
+            TP: Transmission response from above (nf x 4), 1st element corresponds to zero frequency.
+        """
+            
+        print('Modelling reflection / transmission response for p = %.2f*1e-3 ...'%(p*1e3))
+        
+        # Number of layers
+        N = np.size(self.cpvec)
+        
+        if eps is None:
+            eps = 3/(self.nf*self.dt)
+        
+        # Frequency and wavenumber meshgrids
+        Wfft = self.Wvec()[1]
+    
+        # Extract positive frequencies including most negative frequency sample
+        Wpos  = Wfft[0:self.nf,0] + 1j*eps
+        
+        # Propagation and scattering matrices of an infinitesimal layer without any contrast
+        
+        W = np.zeros((self.nf,4),dtype=complex)
+        
+        RP = np.zeros((self.nf,4),dtype=complex)
+        RM = np.zeros((self.nf,4),dtype=complex)
+        
+        I = np.zeros((self.nf,4),dtype=complex)
+        I[:,0] = 1
+        I[:,3] = 1
+        M1 = I.copy()
+        M2 = I.copy()
+        
+        # Here every frequency and every wavenumber component have an amplitude 
+        # equal to one. Hence, the total wavefield has a strength of sqrt(nt*nr)
+        # When an inverse fft (ifft2) is applied the wavefield is scaled by 
+        # 1/sqrt(nt*nr) hence in the time domain the wavefield has the an
+        # amplitude equal to one.
+        TP = I.copy()
+        TM = I.copy()
+        
+#        if self.csvec[0] == 0:
+#            TP[:,3] = 0
+#            TM[:,3] = 0
+        
+        # Loop over N-1 interfaces
+        for n in range(0,N-1):
+            
+            dz1 = self.dzvec[n]
+            
+            # Parameters of top layer
+            cp1 = self.cpvec[n]
+            cs1 = self.csvec[n]
+            ro1 = self.rovec[n]
+        
+            # Parameters of bottom layer
+            cp2 = self.cpvec[n+1]
+            cs2 = self.csvec[n+1]
+            ro2 = self.rovec[n+1]
+            
+            qp = (1/cp1**2 - p**2)**0.5 # kz/w for p-waves
+            qs = (1/cs1**2 - p**2)**0.5 # kz/w for s-waves
+                
+            W[:,0] = np.exp(1j*Wpos*qp*dz1)
+#            if cs1 != 0:
+            W[:,3] = np.exp(1j*Wpos*qs*dz1)   # for elastic layer
+#            else: 
+#                W[:,:,3] = 0                    # for purely acoustic layer
+            
+            # Outputs.shape = (1,4)
+            rP,tP,rM,tM = self.RT_p_w(cp1,cs1,ro1,cp2,cs2,ro2,p,conv)[0:4]
+    
+            if mul == 1:
+                tmp = I - self.Mul_My_dot(RM,W,rP,W)
+                # Inverse of tmp
+                M1 = self.My_inv(tmp)
+                
+                tmp = I - self.Mul_My_dot(rP,W,RM,W)
+                # Inverse of tmp
+                M2 = self.My_inv(tmp)
+                
+            # Update reflection / transmission responses
+            RP = RP + self.Mul_My_dot(TM,W,rP,W,M1,TP)
+            RM = rM + self.Mul_My_dot(tP,W,RM,W,M2,tM)
+            TP = self.Mul_My_dot(tP,W,M1,TP)
+            TM = self.Mul_My_dot(TM,W,M2,tM)      
+                
+    
+        # The highest negative frequency and highest negative wavenumber components are real-valued
+        RP[self.nf-1,:] = RP[self.nf-1,:].real
+        TP[self.nf-1,:] = TP[self.nf-1,:].real
+        RM[self.nf-1,:] = RM[self.nf-1,:].real
+        TM[self.nf-1,:] = TM[self.nf-1,:].real
+        
+        # Conjugate wavefields
+        RP = RP.conj()
+        TP = TP.conj()
+        RM = RM.conj()
+        TM = TM.conj()
+        
+        # Remove NaNs
+        RP = np.nan_to_num(RP)
+        TP = np.nan_to_num(TP)
+        RM = np.nan_to_num(RM)
+        TM = np.nan_to_num(TM)
+        
+        # Write full reflection and transmission matrices
+        if sort == 1:
+            RP,TP,RM,TM = self.Sort_w(RP,TP,RM,TM)
+            return RP,TP,RM,TM
+        
+        return RP,TP,RM,TM
+    
     
     def Sort_w(self,*args):
         """
