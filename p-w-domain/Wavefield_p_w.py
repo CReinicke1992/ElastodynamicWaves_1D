@@ -58,7 +58,7 @@ class Wavefield_p_w:
         dw = 2*np.pi/(self.dt*self.nt)
         wvec = np.zeros((self.nt,1))
         wvec[:,0] = dw*np.arange(-self.nt/2,self.nt/2)
-        wvec[-1] = -wvec[-1]
+        wvec[0] = -wvec[0]
         wvecfft = np.fft.ifftshift(wvec)
         return wvec,wvecfft
     
