@@ -323,9 +323,9 @@ class Wavefield_p_w:
             eps:            Gain factor.
             taperlen:       Length of cosine taper.
             norm:
-            zeropad:        Set zeropad=1 to use zeropadding.
-            paddingtaper:   Length of taper for the zero padding (to avoid sharp edges).
-            t1:             Onset time of first arrival if before time zero (1x1 or 4x1). Only the earliest time will be taken into account.
+            zeropad:        Set zeropad=1 to mute negative times.
+            paddingtaper:   Length of taper in seconds for the zero padding (to avoid sharp edges).
+            t1:             Onset time of first arrival in seconds if before time zero (1x1 or 4x1). Only the earliest time will be taken into account.
         
         Output: 
             array_tp: Array in tp, fftsift and gain are applied.
@@ -345,36 +345,31 @@ class Wavefield_p_w:
         if array.ndim == 3:
             gain = np.tile(gain,(self.nr,1,1)).swapaxes(0,1)
         
-        if zeropad == 0:
-            if norm is None:
-                array_tp = np.fft.ifft(array,n=None,axis=0).real
-            elif norm == 'ortho':
-                array_tp = np.fft.ifft(array,n=None,axis=0,norm='ortho').real
+        if norm is None:
+            array_tp = np.fft.ifft(array,n=None,axis=0).real
+        elif norm == 'ortho':
+            array_tp = np.fft.ifft(array,n=None,axis=0,norm='ortho').real
             
-        else:
+        if zeropad == 1:
             
             if t1 is None:
-                fac = 1
                 shift = 0
             else:
-                fac = 2
-                shift = 4*int(np.max(abs(t1))/self.dt)
-                
-            if norm is None:
-                array_tp = fac*2*np.fft.ifft(array,n=fac*2*self.nt,axis=0).real
-            elif norm == 'ortho':
-                array_tp = fac*2*np.fft.ifft(array,n=fac*2*self.nt,axis=0,norm='ortho').real
-            
-            # Remove fft-interpolated time samples
-            array_tp = array_tp[::2*fac,:]
+                shift = int(np.max(abs(t1))/self.dt)
             
             # Construct taper array from minus taperlength to time zero
             if paddingtaper is None:
                 paddingtaper = int(self.nt/16)
-            tap = np.zeros((paddingtaper+1,array.shape[1]))
-            tap[:,0] = np.cos(np.linspace(-np.pi/2,0,paddingtaper+1))**2
-            if array.shape[1] == 4:
-                tap = np.array([tap[:,0],tap[:,0],tap[:,0],tap[:,0]]).T
+            else:
+                paddingtaper = int(paddingtaper/self.dt)
+            tap          = np.zeros_like(array_tp)
+            tap          = tap[:paddingtaper+1,:]
+            tap_tmp      = np.zeros((paddingtaper+1,1))
+            tap_tmp[:,0] = np.cos(np.linspace(-np.pi/2,0,paddingtaper+1))**2
+            reps         = int(tap.size/tap.shape[0])
+            tap_tmp      = np.tile(tap_tmp,reps)
+            tap_tmp      = np.reshape(tap_tmp,(tap_tmp.size,1))
+            tap          = np.reshape(tap_tmp,tap.shape)
             
             # Apply taper to avoid that zero-padding introduces a strong amplitude jump
             index = self.nt-shift
@@ -387,10 +382,14 @@ class Wavefield_p_w:
             # Construct taper array from latest time minus taperlength to latest time
             # Here I restrict the taperlength to 1/16 of nt to avoid significant scaling of the amplitudes at positive times
             paddingtaper = int(self.nt/16)
-            tap = np.zeros((paddingtaper+1,array.shape[1]))**2
-            tap[:,0] = np.cos(np.linspace(-np.pi/2,0,paddingtaper+1))
-            if array.shape[1] == 4:
-                tap = np.array([tap[:,0],tap[:,0],tap[:,0],tap[:,0]]).T
+            tap          = np.zeros_like(array_tp)
+            tap          = tap[:paddingtaper+1,:]
+            tap_tmp      = np.zeros((paddingtaper+1,1))
+            tap_tmp[:,0] = np.cos(np.linspace(-np.pi/2,0,paddingtaper+1))**2
+            reps         = int(tap.size/tap.shape[0])
+            tap_tmp      = np.tile(tap_tmp,reps)
+            tap_tmp      = np.reshape(tap_tmp,(tap_tmp.size,1))
+            tap          = np.reshape(tap_tmp,tap.shape)
             
             # Apply taper to avoid that zero-padding introduces a strong amplitude jump
             array_tp[nf-2-paddingtaper:nf-2,:] = array_tp[nf-2-paddingtaper:nf-2,:]*tap[-2::-1,:]
