@@ -618,8 +618,6 @@ class Layers_p_w(Wavefield_p_w):
     # Green's function between depth z and surface
     def Gz2surf(self,p,z,mul=1,conv=1,eps=None):
         """
-        G with at surface and receiver just below z 
-        Needs testing
         GMP,GPP,GMP2,GMM = Gz2surf(p,z,mul=1,conv=1,eps=None)
         Compute one-way Green's matrices for a single ray-parameter and all frequencies. 
         
@@ -821,8 +819,20 @@ class Layers_p_w(Wavefield_p_w):
     # Green's function between depth z and bottom
     def Gz2bot(self,p,z,mul=1,conv=1,eps=None):
         """
-        G with at bottom and receiver just below z 
-        Needs testing: Done, works fine.
+        GPM,GMM,GPM2,GPP = Gz2bot(p,z,mul=1,conv=1,eps=None)
+        Compute one-way Green's matrices for a single ray-parameter and all frequencies. 
+        
+        Inputs:
+            p:    Ray-parameter.
+            mul:  Set mul=1 to model internal multiples.
+            conv: Set conv=1 to model P/S conversions.
+            eps:  Set eps to add an imaginary constant to the frequency: w -> w + 1j*eps. This reduces the temporal wrap-around but one has to correct for this by multiplying the data by exp(eps*t) in the time domain.
+        
+        Output:
+            GPM:  Green's matrix for a upgping source at the bottom boundary and a downgoing receiver at z. (nf x 4), 1st element corresponds to zero frequency.
+            GMM:  Green's matrix for a upgping source at the bottom boundary and an upgoing receiver at z. (nf x 4), 1st element corresponds to zero frequency.
+            GPM2: Green's matrix for an upgoing source at z and a downgoing receiver at the bottom boundary. (nf x 4), 1st element corresponds to zero frequency.
+            GPP:  Green's matrix for a downgoing source at z and a downgoing receiver at the bottom boundary. (nf x 4), 1st element corresponds to zero frequency.
         """
         
         print('Modelling Greens functions to lower boundary for p = %.2f*1e-3 ...'%(p*1e3))
