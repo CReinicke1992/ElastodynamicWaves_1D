@@ -58,7 +58,6 @@ class Wavefield_p_w:
         dw = 2*np.pi/(self.dt*self.nt)
         wvec = np.zeros((self.nt,1))
         wvec[:,0] = dw*np.arange(-self.nt/2,self.nt/2)
-        wvec[0] = -wvec[0]
         wvecfft = np.fft.ifftshift(wvec)
         return wvec,wvecfft
     
@@ -303,6 +302,8 @@ class Wavefield_p_w:
         if eps == 0:
             return array
         
+        # Before transforming to the t-p domain the imaginary part of the Nyquist frequency element is deleted
+        array[self.nf-1,:] = array[self.nf-1,:].real
         array_tp = np.fft.ifft(array,n=None,axis=0).real
         
         if array.shape[1] != 4:
@@ -331,6 +332,10 @@ class Wavefield_p_w:
         Output: 
             array_tp: Array in tp, fftsift and gain are applied.
         """
+        
+        # Before transforming to the t-p domain the imaginary part of the Nyquist frequency element is deleted
+        array[self.nf-1,:] = array[self.nf-1,:].real
+        
         if threshold != None:
             array[abs(array)>threshold] = threshold
             
