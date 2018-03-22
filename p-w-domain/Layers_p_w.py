@@ -620,6 +620,20 @@ class Layers_p_w(Wavefield_p_w):
         """
         G with at surface and receiver just below z 
         Needs testing
+        GMP,GPP,GMP2,GMM = Gz2surf(p,z,mul=1,conv=1,eps=None)
+        Compute one-way Green's matrices for a single ray-parameter and all frequencies. 
+        
+        Inputs:
+            p:    Ray-parameter.
+            mul:  Set mul=1 to model internal multiples.
+            conv: Set conv=1 to model P/S conversions.
+            eps:  Set eps to add an imaginary constant to the frequency: w -> w + 1j*eps. This reduces the temporal wrap-around but one has to correct for this by multiplying the data by exp(eps*t) in the time domain.
+        
+        Output:
+            GMP:  Green's matrix for a downgping source at the top boundary and an upgoing receiver at z. (nf x 4), 1st element corresponds to zero frequency.
+            GPP:  Green's matrix for a downgoing source at the top boundary and an downgoing receiver at z. (nf x 4), 1st element corresponds to zero frequency.
+            GMP2: Green's matrix for a downgoing source at z and an upgoing receiver at the top boundary. (nf x 4), 1st element corresponds to zero frequency.
+            GMM:  Green's matrix for an upgoing source at z and an upgoing receiver at the top boundary. (nf x 4), 1st element corresponds to zero frequency.
         """
         
         print('Modelling Greens functions to upper boundary for p = %.2f*1e-3 ...'%(p*1e3))
