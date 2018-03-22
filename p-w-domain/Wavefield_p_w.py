@@ -305,7 +305,22 @@ class Wavefield_p_w:
             return array
         
         # Before transforming to the t-p domain the imaginary part of the Nyquist frequency element is deleted
+        if self.verbose == 1:
+            print('\n')
+            print('Correct_eps_p_w:')
+            print('\n'+100*'-'+'\n')
+            print('To correct for the complex-valued frequency Correct_eps_p_w transforms the input array to the time domain, '+
+                  'applies a gain and transforms the result back to the frequency domain. Since the time signal is real-valued '+
+                  'the imaginary part of the Nyquist frequency element should be zero. In this case the imaginary part equals,\n')
+            print(array[self.nf-1,:].imag)
+            print('\nAfter dividing by its real-part the imaginary part of the Nyquist frequency element equals,\n')
+            print(array[self.nf-1,:].imag/array[self.nf-1,:].real)
+            print('\nIf each event is sampled on-time the Nyquist frequency element should be real-valued within double-precision. '+
+                  'Before applying an inverse Fourier transform WP2TP deletes the imaginary part of the Nyquist frequency element. Also see WP2TP.')
+            print('\n')
         array[self.nf-1,:] = array[self.nf-1,:].real
+        
+        # Transform to the time domain.
         array_tp = np.fft.ifft(array,n=None,axis=0).real
         
         if array.shape[1] != 4:
