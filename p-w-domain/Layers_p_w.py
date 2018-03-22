@@ -976,13 +976,33 @@ class Layers_p_w(Wavefield_p_w):
         # Remove layer
         self.Remove_layer(z)
 
-        # The highest negative frequency component is real-valued
-        GMM[self.nf-1,:] = GMM[self.nf-1,:].real
-        GPM[self.nf-1,:] = GPM[self.nf-1,:].real
-        
         # Conjugate wavefields
         GMM = GMM.conj()
         GPM = GPM.conj()
+        
+        # Verbose: Remove NaNs and Infs
+        if self.verbose == 1:
+            
+            if np.isnan(GMM).any() or np.isnan(GPM).any() or np.isinf(GMM).any() or np.isinf(GPM).any():
+                print('\n')
+                print('Gz2surf:')
+                print('\n'+100*'-'+'\n')
+                print('One of the modelled wavefields contains a NaN (Not a Number) or an Inf (infinite) element. '+
+                      'In this step, NaN is replaced by zero, and infinity (-infinity) is replaced by the largest '+
+                      '(smallest or most negative) floating point value that fits in the output dtype. Also see '+
+                      'numpy.nan_to_num (in numpy or scipy documentation).')
+                print('\n')
+                
+                if np.isnan(GMM).any():
+                    print('\t - GMM contains '+np.count_nonzero(np.isnan(GMM))+' NaN.')
+                if np.isinf(GMM).any():
+                    print('\t - GMM contains '+np.count_nonzero(np.isinf(GMM))+' Inf.')
+                if np.isnan(GPM).any():
+                    print('\t - GPM contains '+np.count_nonzero(np.isnan(GPM))+' NaN.')
+                if np.isinf(GPM).any():
+                    print('\t - GPM contains '+np.count_nonzero(np.isinf(GPM))+' Inf.')
+            
+                print('\n')
         
         # Delete NaN's and limit inf's
         GMM  = np.nan_to_num(GMM)
