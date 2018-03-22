@@ -16,12 +16,13 @@ class Wavefield_p_w:
     Describes wavefields which have multiple frequencies and a single ray-parameter as well as four elastic components PP, PS, SP, SS.
     
     Variables:
-        nt: Number of time/frequency samples
-        dt: Duration per time sample in seconds
-        nr: Number of space samples (only to produce 1.5D plots)
-        dx: Distance per space samples in metres
-        nf: Number of time samples divided by 2 plus 1.
-        nr: Number of space samples divided by 2 plus 1.
+        nt:      Number of time/frequency samples
+        dt:      Duration per time sample in seconds
+        nr:      Number of space samples (only to produce 1.5D plots)
+        dx:      Distance per space samples in metres
+        nf:      Number of time samples divided by 2 plus 1.
+        nr:      Number of space samples divided by 2 plus 1.
+        verbose: Set verbose=1 to gt some feedback about processes.
         
     Data sorting: 
         nt x 4
@@ -35,6 +36,7 @@ class Wavefield_p_w:
         self.nf = int(self.nt/2) + 1
         self.nk = int(self.nr/2) + 1
         self.author = "Christian Reinicke"
+        self.verbose = 0
        
     # Frequency sampling    
     def Dw(self):
@@ -324,16 +326,26 @@ class Wavefield_p_w:
         Input:
             eps:            Gain factor.
             taperlen:       Length of cosine taper.
-            norm:
-            zeropad:        Set zeropad=1 to use zeropadding.
-            paddingtaper:   Length of taper for the zero padding (to avoid sharp edges).
-            t1:             Onset time of first arrival if before time zero (1x1 or 4x1). Only the earliest time will be taken into account.
+            norm:           Choose norm='ortho' to comensate the scaling for automatic scaling by ifft. 
+            zeropad:        Set zeropad=1 to mute negative times.
+            paddingtaper:   Length of taper in seconds for the zero padding (to avoid sharp edges).
+            t1:             Onset time of first arrival in seconds if before time zero (1x1 or 4x1). Only the earliest time will be taken into account.
         
         Output: 
             array_tp: Array in tp, fftsift and gain are applied.
         """
-        
         # Before transforming to the t-p domain the imaginary part of the Nyquist frequency element is deleted
+        if self.verbose == 1:
+            print('\n')
+            print('WP2TP:')
+            print('\n'+100*'-'+'\n')
+            print('Nyquist frequency element has an imaginary part equal to,\n')
+            print(array[self.nf-1,:].imag)
+            print('\nAfter dividing by its real-part the imaginary part of the Nyquist frequency element equals,\n')
+            print(array[self.nf-1,:].imag/array[self.nf-1,:].real)
+            print('\nIf each event is sampled on-time the Nyquist frequency element should be real-valued within double-precision. '+
+                  'Before applying an inverse Fourier transform WP2TP deletes the imaginary part of the Nyquist frequency element.')
+            print('\n')
         array[self.nf-1,:] = array[self.nf-1,:].real
         
         if threshold != None:
@@ -351,36 +363,31 @@ class Wavefield_p_w:
         if array.ndim == 3:
             gain = np.tile(gain,(self.nr,1,1)).swapaxes(0,1)
         
-        if zeropad == 0:
-            if norm is None:
-                array_tp = np.fft.ifft(array,n=None,axis=0).real
-            elif norm == 'ortho':
-                array_tp = np.fft.ifft(array,n=None,axis=0,norm='ortho').real
+        if norm is None:
+            array_tp = np.fft.ifft(array,n=None,axis=0).real
+        elif norm == 'ortho':
+            array_tp = np.fft.ifft(array,n=None,axis=0,norm='ortho').real
             
-        else:
+        if zeropad == 1:
             
             if t1 is None:
-                fac = 1
                 shift = 0
             else:
-                fac = 2
-                shift = 4*int(np.max(abs(t1))/self.dt)
-                
-            if norm is None:
-                array_tp = fac*2*np.fft.ifft(array,n=fac*2*self.nt,axis=0).real
-            elif norm == 'ortho':
-                array_tp = fac*2*np.fft.ifft(array,n=fac*2*self.nt,axis=0,norm='ortho').real
-            
-            # Remove fft-interpolated time samples
-            array_tp = array_tp[::2*fac,:]
+                shift = int(np.max(abs(t1))/self.dt)
             
             # Construct taper array from minus taperlength to time zero
             if paddingtaper is None:
                 paddingtaper = int(self.nt/16)
-            tap = np.zeros((paddingtaper+1,array.shape[1]))
-            tap[:,0] = np.cos(np.linspace(-np.pi/2,0,paddingtaper+1))**2
-            if array.shape[1] == 4:
-                tap = np.array([tap[:,0],tap[:,0],tap[:,0],tap[:,0]]).T
+            else:
+                paddingtaper = int(paddingtaper/self.dt)
+            tap          = np.zeros_like(array_tp)
+            tap          = tap[:paddingtaper+1,:]
+            tap_tmp      = np.zeros((paddingtaper+1,1))
+            tap_tmp[:,0] = np.cos(np.linspace(-np.pi/2,0,paddingtaper+1))**2
+            reps         = int(tap.size/tap.shape[0])
+            tap_tmp      = np.tile(tap_tmp,reps)
+            tap_tmp      = np.reshape(tap_tmp,(tap_tmp.size,1))
+            tap          = np.reshape(tap_tmp,tap.shape)
             
             # Apply taper to avoid that zero-padding introduces a strong amplitude jump
             index = self.nt-shift
@@ -393,10 +400,14 @@ class Wavefield_p_w:
             # Construct taper array from latest time minus taperlength to latest time
             # Here I restrict the taperlength to 1/16 of nt to avoid significant scaling of the amplitudes at positive times
             paddingtaper = int(self.nt/16)
-            tap = np.zeros((paddingtaper+1,array.shape[1]))**2
-            tap[:,0] = np.cos(np.linspace(-np.pi/2,0,paddingtaper+1))
-            if array.shape[1] == 4:
-                tap = np.array([tap[:,0],tap[:,0],tap[:,0],tap[:,0]]).T
+            tap          = np.zeros_like(array_tp)
+            tap          = tap[:paddingtaper+1,:]
+            tap_tmp      = np.zeros((paddingtaper+1,1))
+            tap_tmp[:,0] = np.cos(np.linspace(-np.pi/2,0,paddingtaper+1))**2
+            reps         = int(tap.size/tap.shape[0])
+            tap_tmp      = np.tile(tap_tmp,reps)
+            tap_tmp      = np.reshape(tap_tmp,(tap_tmp.size,1))
+            tap          = np.reshape(tap_tmp,tap.shape)
             
             # Apply taper to avoid that zero-padding introduces a strong amplitude jump
             array_tp[nf-2-paddingtaper:nf-2,:] = array_tp[nf-2-paddingtaper:nf-2,:]*tap[-2::-1,:]
@@ -648,7 +659,7 @@ class Wavefield_p_w:
                 xlab = 'Offset (m)'
                 ylab = 'Time (s)'
             
-            fig = plt.figure()
+            fig = plt.figure() 
             ax0 = plt.subplot2grid((2, 2), (0, 0),colspan=1)
             ax1 = plt.subplot2grid((2, 2), (0, 1),colspan=1)
             ax2 = plt.subplot2grid((2, 2), (1, 0),colspan=1)
