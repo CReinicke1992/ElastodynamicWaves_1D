@@ -741,7 +741,6 @@ class Layers_p_w(Wavefield_p_w):
             if mul==1:
                 M3	 = self.My_inv(I - self.My_dot(rM,RPP))
 
-
             RPP =	self.Mul_My_dot( W,(rP + self.Mul_My_dot(tM,RPP,M3,tP)),W )
             
         # Compute the Green's functions
@@ -756,33 +755,51 @@ class Layers_p_w(Wavefield_p_w):
             
         # Remove layers
         self.Remove_layer(z)
-
-        # The highest negative frequency component is real-valued
-        GPP[self.nf-1,:] = GPP[self.nf-1,:].real
-        GMP[self.nf-1,:] = GMP[self.nf-1,:].real
         
         # Conjugate wavefields
         GPP = GPP.conj()
         GMP = GMP.conj()
         
-        GMP,GPP = self.Sort_w(GMP,GPP)
-        
-        
-        # Apply source - receiver reciprocity
-        
-        # GMM(kx) = -GPP(-p).T (Paper Physical review E 2014 Eq. A.16) 
-        GMM = -self.My_T(GPP)             # Transpose and sign invert GPP
-        GMM = self.Reverse_p(GMM)         # Reverese p
-
-        # GMP2(kx) = GMP(-p).T (Paper Physical review E 2014 Eq. A.16) 
-        GMP2 = self.My_T(GMP)               # Transpose GMP
-        GMP2 = self.Reverse_p(GMP2)         # Reverese p
+        # Verbose: Remove NaNs and Infs
+        if self.verbose == 1:
+            
+            if np.isnan(GMP).any() or np.isnan(GPP).any() or np.isinf(GMP).any() or np.isinf(GPP).any():
+                print('\n')
+                print('Gz2surf:')
+                print('\n'+100*'-'+'\n')
+                print('One of the modelled wavefields contains a NaN (Not a Number) or an Inf (infinite) element. '+
+                      'In this step, NaN is replaced by zero, and infinity (-infinity) is replaced by the largest '+
+                      '(smallest or most negative) floating point value that fits in the output dtype. Also see '+
+                      'numpy.nan_to_num (in numpy or scipy documentation).')
+                print('\n')
+                
+                if np.isnan(GMP).any():
+                    print('\t - GMP contains '+np.count_nonzero(np.isnan(GMP))+' NaN.')
+                if np.isinf(GMP).any():
+                    print('\t - GMP contains '+np.count_nonzero(np.isinf(GMP))+' Inf.')
+                if np.isnan(GPP).any():
+                    print('\t - GPP contains '+np.count_nonzero(np.isnan(GPP))+' NaN.')
+                if np.isinf(GPP).any():
+                    print('\t - GPP contains '+np.count_nonzero(np.isinf(GPP))+' Inf.')
+            
+                print('\n')
         
         # Delete NaN's and limit inf's
         GMP  = np.nan_to_num(GMP) 
         GPP  = np.nan_to_num(GPP)
-        GMP2 = np.nan_to_num(GMP2)
-        GMM  = np.nan_to_num(GMM)
+        
+        # Construct negative frequency samples for a real-valued time signal
+        GMP,GPP = self.Sort_w(GMP,GPP)
+    
+        # Apply source - receiver reciprocity
+        
+        # GMM(p) = -GPP(-p).T (Paper Physical review E 2014 Eq. A.16) 
+        GMM = -self.My_T(GPP)             # Transpose and sign invert GPP
+        GMM = self.Reverse_p(GMM)         # Reverese p
+
+        # GMP2(p) = GMP(-p).T (Paper Physical review E 2014 Eq. A.16) 
+        GMP2 = self.My_T(GMP)               # Transpose GMP
+        GMP2 = self.Reverse_p(GMP2)         # Reverese p
         
         return GMP,GPP,GMP2,GMM
 
