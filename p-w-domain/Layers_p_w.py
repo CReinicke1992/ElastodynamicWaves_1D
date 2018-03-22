@@ -504,10 +504,10 @@ class Layers_p_w(Wavefield_p_w):
                 
     
         # The highest negative frequency and highest negative wavenumber components are real-valued
-        RP[self.nf-1,:] = RP[self.nf-1,:].real
-        TP[self.nf-1,:] = TP[self.nf-1,:].real
-        RM[self.nf-1,:] = RM[self.nf-1,:].real
-        TM[self.nf-1,:] = TM[self.nf-1,:].real
+#        RP[self.nf-1,:] = RP[self.nf-1,:].real
+#        TP[self.nf-1,:] = TP[self.nf-1,:].real
+#        RM[self.nf-1,:] = RM[self.nf-1,:].real
+#        TM[self.nf-1,:] = TM[self.nf-1,:].real
         
         # Conjugate wavefields
         RP = RP.conj()
@@ -515,11 +515,11 @@ class Layers_p_w(Wavefield_p_w):
         RM = RM.conj()
         TM = TM.conj()
         
-        # Remove NaNs
-        RP = np.nan_to_num(RP)
-        TP = np.nan_to_num(TP)
-        RM = np.nan_to_num(RM)
-        TM = np.nan_to_num(TM)
+#        # Remove NaNs
+#        RP = np.nan_to_num(RP)
+#        TP = np.nan_to_num(TP)
+#        RM = np.nan_to_num(RM)
+#        TM = np.nan_to_num(TM)
         
         # Write full reflection and transmission matrices
         if sort == 1:
@@ -555,6 +555,7 @@ class Layers_p_w(Wavefield_p_w):
         
         # Frequency and wavenumber meshgrids
         Wfft = self.Wvec()[1]
+        Wfft[self.nf-1,0]=-Wfft[self.nf-1,0]
     
         # Extract positive frequencies including most negative frequency sample
         Wpos  = Wfft[0:self.nf,0] + 1j*eps
@@ -616,23 +617,23 @@ class Layers_p_w(Wavefield_p_w):
                 # Inverse of tmp
                 M1 = self.My_inv(tmp)
                 
-                M1 = I.copy()
-                tmp = I.copy()
-                Q = self.Mul_My_dot(RM,W,rP,W)
-                for K in range(20):
-                    tmp = self.My_dot(tmp,Q)
-                    M1 = M1 + tmp
+#                M1 = I.copy()
+#                tmp = I.copy()
+#                Q = self.Mul_My_dot(RM,W,rP,W)
+#                for K in range(20):
+#                    tmp = self.My_dot(tmp,Q)
+#                    M1 = M1 + tmp
                 
                 tmp = I - self.Mul_My_dot(rP,W,RM,W)
                 # Inverse of tmp
                 M2 = self.My_inv(tmp)
                 
-                M2 = I.copy()
-                tmp = I.copy()
-                Q = self.Mul_My_dot(rP,W,RM,W)
-                for K in range(20):
-                    tmp = self.My_dot(tmp,Q)
-                    M1 = M1 + tmp
+#                M2 = I.copy()
+#                tmp = I.copy()
+#                Q = self.Mul_My_dot(rP,W,RM,W)
+#                for K in range(20):
+#                    tmp = self.My_dot(tmp,Q)
+#                    M2 = M2 + tmp
                 
             # Update reflection / transmission responses
             RP = RP + self.Mul_My_dot(TM,W,rP,W,M1,TP)
