@@ -1352,7 +1352,9 @@ class Layers_p_w(Wavefield_p_w):
     # Green's function between two depth levels: Receiver at zR, source at zS
     def GzRzS(self,p,zR,zS,mul=1,conv=1,eps=None,initials=[]):
         """
-        Model the Green's functions between an arbitrary source depth level zS and an arbitrary receiver depth level zR.
+        G,initials = GzRzS(p,zR,zS,mul=1,conv=1,eps=None,initials=[])
+        
+        Compute one-way Green's matrices for a source just below zS and a receiver just below zR, for a single ray-parameter and all frequencies. 
         
         Inputs:
             p:          Ray-parameter (single value).
@@ -1364,7 +1366,7 @@ class Layers_p_w(Wavefield_p_w):
             initials:   Default initials=[]. If, for a fix source depth level, multiple receiver depth levels are modelled, part of the modelled data can be re-used at receiver depth level to reduce the computation time.
             
         Outputs:
-            G:          A list containing the four one-way components of the Green's function: G = [GPP13,GPM13,GMP13,GMM13].
+            G:          A list containing the four one-way components of the Green's matrix associsated to a source at zS and a receiver at zR: G = [GPP13,GPM13,GMP13,GMM13].
             initials:   A list containing current source & receiver depth levels as well as the responses of the medium above zS/zR, between zS/zR and below zS/zR: initials = [zR,zS,RP1,RM1,TP1,TM1,RP2,RM2,TP2,TM2,RP3,RM3,TP3,TM3].
             
         """
