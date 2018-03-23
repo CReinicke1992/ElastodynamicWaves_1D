@@ -9,7 +9,6 @@ Created on Thu Aug 10 09:03:17 2017
 from Layers_p_w import Layers_p_w
 import numpy as np
 import matplotlib.pylab as plt
-import scipy as sc
 from scipy import optimize
 
 # Focusing and Green's functions between a focal depth and 
@@ -139,10 +138,35 @@ class Marchenko_p_w(Layers_p_w):
             
             # Compute F1plus
             self.F1P = self.My_inv(TP)
-            self.F1P = np.nan_to_num(self.F1P)
             
             # Compute F1minus
             self.F1M = self.My_dot(RP,self.F1P)
+            
+            # Verbose: Remove NaNs and Infs
+            if self.verbose == 1:
+                
+                if np.isnan(self.F1P).any() or np.isnan(self.F1M).any() or np.isinf(self.F1P).any() or np.isinf(self.F1M).any():
+                    print('\n')
+                    print('FocusFunc1_inv:')
+                    print('\n'+100*'-'+'\n')
+                    print('At least one of the modelled wavefields contains a NaN (Not a Number) or an Inf (infinite) element. '+
+                          'In this step, NaN is replaced by zero, and infinity (-infinity) is replaced by the largest '+
+                          '(smallest or most negative) floating point value that fits in the output dtype. Also see '+
+                          'numpy.nan_to_num (in numpy or scipy documentation).')
+                    print('\n')
+                    
+                    if np.isnan(self.F1P).any():
+                        print('\t - F1P contains '+np.count_nonzero(np.isnan(self.F1P))+' NaN.')
+                    if np.isinf(self.F1P).any():
+                        print('\t - F1P contains '+np.count_nonzero(np.isinf(self.F1P))+' Inf.')
+                    if np.isnan(self.F1M).any():
+                        print('\t - F1M contains '+np.count_nonzero(np.isnan(self.F1M))+' NaN.')
+                    if np.isinf(self.F1M).any():
+                        print('\t - F1M contains '+np.count_nonzero(np.isinf(self.F1M))+' Inf.')
+                
+                    print('\n')
+            
+            self.F1P = np.nan_to_num(self.F1P)
             self.F1M = np.nan_to_num(self.F1M)
             
             # Construct negative frequencies/wavenumbers
@@ -166,11 +190,37 @@ class Marchenko_p_w(Layers_p_w):
             
             # Compute F1plus
             self.F1P_neps = self.My_inv(TP)
-            self.F1P_neps = np.nan_to_num(self.F1P_neps)
             
             # Compute F1minus
             self.F1M_neps = self.My_dot(RP,self.F1P_neps)
+            
+            # Verbose: Remove NaNs and Infs
+            if self.verbose == 1:
+                
+                if np.isnan(self.F1P_neps).any() or np.isnan(self.F1M_neps).any() or np.isinf(self.F1P_neps).any() or np.isinf(self.F1M_neps).any():
+                    print('\n')
+                    print('FocusFunc1_inv:')
+                    print('\n'+100*'-'+'\n')
+                    print('At least one of the modelled wavefields contains a NaN (Not a Number) or an Inf (infinite) element. '+
+                          'In this step, NaN is replaced by zero, and infinity (-infinity) is replaced by the largest '+
+                          '(smallest or most negative) floating point value that fits in the output dtype. Also see '+
+                          'numpy.nan_to_num (in numpy or scipy documentation).')
+                    print('\n')
+                    
+                    if np.isnan(self.F1P_neps).any():
+                        print('\t - F1P_neps contains '+np.count_nonzero(np.isnan(self.F1P_neps))+' NaN.')
+                    if np.isinf(self.F1P_neps).any():
+                        print('\t - F1P_neps contains '+np.count_nonzero(np.isinf(self.F1P_neps))+' Inf.')
+                    if np.isnan(self.F1M_neps).any():
+                        print('\t - F1M_neps contains '+np.count_nonzero(np.isnan(self.F1M_neps))+' NaN.')
+                    if np.isinf(self.F1M_neps).any():
+                        print('\t - F1M_neps contains '+np.count_nonzero(np.isinf(self.F1M_neps))+' Inf.')
+                
+                    print('\n')
+            
+            self.F1P_neps = np.nan_to_num(self.F1P_neps)
             self.F1M_neps = np.nan_to_num(self.F1M_neps)
+            
         else:
             print('Using previously computed focusing functions with negative eps for $p = %.2f *1e-3$ ...'%(p*1e3))
             
