@@ -1030,6 +1030,25 @@ class Layers_p_w(Wavefield_p_w):
         G with source at surface and receiver just below z 
         G with source at bottom and receiver just below z 
         Needs testing
+        
+        Gs,Gb,initials = Gz2bound(self,p,z,mul=1,conv=1,eps=None,initials=[])
+        Gs       = [GsMP,GsPP,GsMP2,GsMM]
+        Gb       = [GbPM,GbMM,GbPM2,GbPP]
+        initials = [RP,RM,TP,TM,z]
+        Compute one-way Green's matrices between a depth level z and the top and bottom boundary, for a single ray-parameter and all frequencies. 
+        
+        Inputs:
+            p:          Ray-parameter.
+            z:          Depth level inside the model.
+            mul:        Set mul=1 to model internal multiples.
+            conv:       Set conv=1 to model P/S conversions.
+            eps:        Set eps to add an imaginary constant to the frequency: w -> w + 1j*eps. This reduces the temporal wrap-around but one has to correct for this by multiplying the data by exp(eps*t) in the time domain.
+            initials:   List of reflection and transmission responses of the overburden, i.e. between the top boundary and a depth level z from a prior computation. The list initials allows to reuse previously computed medium responses to avoid repeating the computation.
+        
+        Output:
+            Gs:         Green's matrices for sources and receives at the top boundary and at z. (nf x 4), 1st element corresponds to zero frequency.
+            Gb:         Green's matrices for sources and receives at the bottom boundary and at z. (nf x 4), 1st element corresponds to zero frequency.
+            initials:   List of reflection and transmission responses of the overburden, i.e. between the top boundary and z. If in a next step z is set to a deeper level the responses of initials can be reused to avoid repeating the computation.
         """
         
         print('Modelling Greens functions to lower and upper boundary for p = %.2f*1e-3 ...'%(p*1e3))
