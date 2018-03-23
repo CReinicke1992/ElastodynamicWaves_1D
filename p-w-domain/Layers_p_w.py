@@ -1719,23 +1719,50 @@ class Layers_p_w(Wavefield_p_w):
         if remove == 1:
             self.Remove_layer(np.cumsum(self.dzvec)[-1])
         
-        # Delete NaN's and limit inf's
-        GPP13 = np.nan_to_num(GPP13)
-        GPM13 = np.nan_to_num(GPM13)
-        GMP13 = np.nan_to_num(GMP13)
-        GMM13 = np.nan_to_num(GMM13)
-        
-        # The highest negative frequency and highest negative wavenumber components are real-valued
-        GPP13[self.nf-1,:] = GPP13[self.nf-1,:].real
-        GPM13[self.nf-1,:] = GPM13[self.nf-1,:].real
-        GMP13[self.nf-1,:] = GMP13[self.nf-1,:].real
-        GMM13[self.nf-1,:] = GMM13[self.nf-1,:].real
-        
         # Conjugate wavefields
         GPP13 = GPP13.conj()
         GPM13 = GPM13.conj()
         GMP13 = GMP13.conj()
         GMM13 = GMM13.conj()
+        
+        # Verbose: Remove NaNs and Infs
+        if self.verbose == 1:
+            
+            if ( np.isnan(GPP13).any() or np.isnan(GPM13).any() or np.isinf(GPP13).any() or np.isinf(GPM13).any() or
+                 np.isnan(GMP13).any() or np.isnan(GMM13).any() or np.isinf(GMP13).any() or np.isinf(GMM13).any() ):
+                print('\n')
+                print('Gz2bound:')
+                print('\n'+100*'-'+'\n')
+                print('At least one of the modelled wavefields contains a NaN (Not a Number) or an Inf (infinite) element. '+
+                      'In this step, NaN is replaced by zero, and infinity (-infinity) is replaced by the largest '+
+                      '(smallest or most negative) floating point value that fits in the output dtype. Also see '+
+                      'numpy.nan_to_num (in numpy or scipy documentation).')
+                print('\n')
+                
+                if np.isnan(GPP13).any():
+                    print('\t - GPP13 contains '+np.count_nonzero(np.isnan(GPP13))+' NaN.')
+                if np.isinf(GPP13).any():
+                    print('\t - GPP13 contains '+np.count_nonzero(np.isinf(GPP13))+' Inf.')
+                if np.isnan(GPM13).any():
+                    print('\t - GPM13 contains '+np.count_nonzero(np.isnan(GPM13))+' NaN.')
+                if np.isinf(GPM13).any():
+                    print('\t - GPM13 contains '+np.count_nonzero(np.isinf(GPM13))+' Inf.')
+                if np.isnan(GMP13).any():
+                    print('\t - GMP13 contains '+np.count_nonzero(np.isnan(GMP13))+' NaN.')
+                if np.isinf(GMP13).any():
+                    print('\t - GMP13 contains '+np.count_nonzero(np.isinf(GMP13))+' Inf.')
+                if np.isnan(GMM13).any():
+                    print('\t - GMM13 contains '+np.count_nonzero(np.isnan(GMM13))+' NaN.')
+                if np.isinf(GMM13).any():
+                    print('\t - GMM13 contains '+np.count_nonzero(np.isinf(GMM13))+' Inf.')
+            
+                print('\n')
+        
+        # Delete NaN's and limit inf's
+        GPP13 = np.nan_to_num(GPP13)
+        GPM13 = np.nan_to_num(GPM13)
+        GMP13 = np.nan_to_num(GMP13)
+        GMM13 = np.nan_to_num(GMM13)
         
         GPP13,GPM13,GMP13,GMM13 = self.Sort_w(GPP13,GPM13,GMP13,GMM13)
     
@@ -1743,10 +1770,6 @@ class Layers_p_w(Wavefield_p_w):
         initials = [zR,zS,RP1,RM1,TP1,TM1,RP2,RM2,TP2,TM2,RP3,RM3,TP3,TM3]
         
         return G,initials
-    
-    
-    
-    
     
     # Insert a layer in the model    
     def Insert_layer(self,z0):
