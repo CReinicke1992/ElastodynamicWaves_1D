@@ -246,10 +246,8 @@ class Marchenko_p_w(Layers_p_w):
             RPfull:   (Optional) Reflection response in the F-Kx domain with a complex-valued frequency w' = w + 1j*eps
             
         Outputs:
-            GMPfull: Green's function G-minus-plus between the focal depth zF and the surface. Real-valued frequencies. All frequencies and wavenumbers (nt x nr x 4).
-            GMMfull: Green's function G-minus-minus between the focal depth zF and the surface. Real-valued frequencies. All frequencies and wavenumbers (nt x nr x 4).
-            GMP:     Green's function G-minus-plus between the focal depth zF and the surface. Real-valued frequencies. Positive and the highest negative frequencies / wavenumbers (nf x nk x 4).
-            GMM:     Green's function G-minus-minus between the focal depth zF and the surface. Real-valued frequencies. Positive and the highest negative frequencies / wavenumbers (nf x nk x 4).
+            GMPfull: Green's function G-minus-plus between the focal depth zF and the surface. Single ray-parameter and all frequencies (nt x 4).
+            GMMfull: Green's function G-minus-minus between the focal depth zF and the surface. Single ray-parameter and all frequencies (nt x 4).
         """
         
         print('Computing Greens functions via Marchenko equations for $p = %.2f *1e-3$ ...'%(p*1e3))
@@ -277,13 +275,38 @@ class Marchenko_p_w(Layers_p_w):
         
         # 1st Marchenko equation
         GMP = self.My_dot(RP,self.F1P) - self.F1M
-        GMP = np.nan_to_num(GMP)
         
         # Compute R dagger
         RPdagger = self.My_T(RP).conj()
         
         # 2nd Marchenko equation
         GMM = (self.My_dot(RPdagger,self.F1M_neps) - self.F1P_neps).conj()
+        
+        # Verbose: Remove NaNs and Infs
+        if self.verbose == 1:
+            
+            if np.isnan(GMP).any() or np.isnan(GMM).any() or np.isinf(GMP).any() or np.isinf(GMM).any():
+                print('\n')
+                print('GreensFunc:')
+                print('\n'+100*'-'+'\n')
+                print('At least one of the modelled wavefields contains a NaN (Not a Number) or an Inf (infinite) element. '+
+                      'In this step, NaN is replaced by zero, and infinity (-infinity) is replaced by the largest '+
+                      '(smallest or most negative) floating point value that fits in the output dtype. Also see '+
+                      'numpy.nan_to_num (in numpy or scipy documentation).')
+                print('\n')
+                
+                if np.isnan(GMP).any():
+                    print('\t - GMP contains '+np.count_nonzero(np.isnan(GMP))+' NaN.')
+                if np.isinf(GMP).any():
+                    print('\t - GMP contains '+np.count_nonzero(np.isinf(GMP))+' Inf.')
+                if np.isnan(GMM).any():
+                    print('\t - GMM contains '+np.count_nonzero(np.isnan(GMM))+' NaN.')
+                if np.isinf(GMM).any():
+                    print('\t - GMM contains '+np.count_nonzero(np.isinf(GMM))+' Inf.')
+            
+                print('\n')
+                
+        GMP = np.nan_to_num(GMP)
         GMM = np.nan_to_num(GMM)
         
         # Get negative frequencies / wavenumbers
