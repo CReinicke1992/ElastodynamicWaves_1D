@@ -1993,6 +1993,8 @@ class Layers_p_w(Wavefield_p_w):
         I think I have to distinguish between up- and downgoing waves: For upgoing
         waves I should use -p to contruct the offset data.
         
+        Fx (for w=1) or fx (for t=1) = Multi_offset(field,p,t=0,w=0,eps=0)
+        
         (Recommended setting t=0 and w=1)
         
         Inputs:
