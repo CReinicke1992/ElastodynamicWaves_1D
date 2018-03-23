@@ -322,6 +322,7 @@ class Marchenko_p_w(Layers_p_w):
     def FocusFunc1_mod(self,p,zF=None,mul=1,conv=1,eps=None,sort=1,initials=[]):
         """
         RP,TP,F1P,F1M,initials = FocusFunc1_mod(p,zF=None,mul=1,conv=1,eps=None,sort=1,initials=[])
+        
         Model the down- and upgoing focusing functions by wavefield extrapolation.
         
         Inputs:
@@ -473,12 +474,44 @@ class Marchenko_p_w(Layers_p_w):
         # Save initial fields for next call of FocusFunc1_mod()
         initials = [RP,RM,TP,TM,F1P,zF]
     
-        # The highest negative frequency component is real-valued
-        RP[self.nf-1,:] = RP[self.nf-1,:].real
-        TP[self.nf-1,:] = TP[self.nf-1,:].real
-        F1P[self.nf-1,:] = F1P[self.nf-1,:].real
-        F1M[self.nf-1,:] = F1M[self.nf-1,:].real
-        
+        # Conjugate wavefields
+        RP = RP.conj()
+        TP = TP.conj()
+        F1P = F1P.conj()
+        F1M = F1M.conj()
+    
+        # Verbose: Remove NaNs and Infs
+        if self.verbose == 1:
+            
+            if ( np.isnan(F1P).any() or np.isnan(F1M).any() or np.isinf(F1P).any() or np.isinf(F1M).any() or
+                 np.isnan(RP).any() or np.isnan(TP).any() or np.isinf(RP).any() or np.isinf(TP).any() ):
+                print('\n')
+                print('FocusFunc1_mod:')
+                print('\n'+100*'-'+'\n')
+                print('At least one of the modelled wavefields contains a NaN (Not a Number) or an Inf (infinite) element. '+
+                      'In this step, NaN is replaced by zero, and infinity (-infinity) is replaced by the largest '+
+                      '(smallest or most negative) floating point value that fits in the output dtype. Also see '+
+                      'numpy.nan_to_num (in numpy or scipy documentation).')
+                print('\n')
+                
+                if np.isnan(F1P).any():
+                    print('\t - F1P contains '+np.count_nonzero(np.isnan(F1P))+' NaN.')
+                if np.isinf(F1P).any():
+                    print('\t - F1P contains '+np.count_nonzero(np.isinf(F1P))+' Inf.')
+                if np.isnan(F1M).any():
+                    print('\t - F1M contains '+np.count_nonzero(np.isnan(F1M))+' NaN.')
+                if np.isinf(F1M).any():
+                    print('\t - F1M contains '+np.count_nonzero(np.isinf(F1M))+' Inf.')
+                if np.isnan(RP).any():
+                    print('\t - RP contains '+np.count_nonzero(np.isnan(RP))+' NaN.')
+                if np.isinf(RP).any():
+                    print('\t - RP contains '+np.count_nonzero(np.isinf(RP))+' Inf.')
+                if np.isnan(TP).any():
+                    print('\t - TP contains '+np.count_nonzero(np.isnan(TP))+' NaN.')
+                if np.isinf(TP).any():
+                    print('\t - TP contains '+np.count_nonzero(np.isinf(TP))+' Inf.')
+            
+                print('\n')
         
         # Remove Nans and values above let's say 10
         RP = np.nan_to_num(RP)
@@ -486,23 +519,16 @@ class Marchenko_p_w(Layers_p_w):
         F1P = np.nan_to_num(F1P)
         F1M = np.nan_to_num(F1M)
         
-        # Conjugate wavefields
-        RP = RP.conj()
-        TP = TP.conj()
-        F1P = F1P.conj()
-        F1M = F1M.conj()
+        # Set new focusing function
+        self.F1P = F1P
+        self.F1M = F1M
         
         # Write full reflection and transmission matrices
         if sort == 1:
-#            Rfull,Tfull = self.Sort_RT_kx_w(RP,TP)
             RPfull,TPfull,F1Pfull,F1Mfull = self.Sort_w(RP,TP,F1P,F1M)
             return RPfull,TPfull,F1Pfull,F1Mfull,initials
         
         return RP,TP,F1P,F1M,initials
-    
-    
-    
-    
     
     # Compute initial focusing function using the forward-scattered transmission
     def F1plus0(self,p,zF,eps=0):
