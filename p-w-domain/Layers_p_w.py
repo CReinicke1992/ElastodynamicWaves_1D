@@ -1259,22 +1259,50 @@ class Layers_p_w(Wavefield_p_w):
             GbMM =	-self.My_dot(TMb)                   # Multiply by -1 because upgoing sources are defined with negative amplitude
             GbPM =	-self.Mul_My_dot(RM,TMb)            # Multiply by -1 because upgoing sources are defined with negative amplitude
 
+        # Verbose: Remove NaNs and Infs
+        if self.verbose == 1:
+            
+            if ( np.isnan(GsPP).any() or np.isnan(GsMP).any() or np.isinf(GsPP).any() or np.isinf(GsMP).any() or
+                 np.isnan(GbMM).any() or np.isnan(GbPM).any() or np.isinf(GbMM).any() or np.isinf(GbPM).any() ):
+                print('\n')
+                print('Gz2bound:')
+                print('\n'+100*'-'+'\n')
+                print('At least one of the modelled wavefields contains a NaN (Not a Number) or an Inf (infinite) element. '+
+                      'In this step, NaN is replaced by zero, and infinity (-infinity) is replaced by the largest '+
+                      '(smallest or most negative) floating point value that fits in the output dtype. Also see '+
+                      'numpy.nan_to_num (in numpy or scipy documentation).')
+                print('\n')
+                
+                if np.isnan(GsPP).any():
+                    print('\t - GsPP contains '+np.count_nonzero(np.isnan(GsPP))+' NaN.')
+                if np.isinf(GsPP).any():
+                    print('\t - GsPP contains '+np.count_nonzero(np.isinf(GsPP))+' Inf.')
+                if np.isnan(GsMP).any():
+                    print('\t - GsMP contains '+np.count_nonzero(np.isnan(GsMP))+' NaN.')
+                if np.isinf(GsMP).any():
+                    print('\t - GsMP contains '+np.count_nonzero(np.isinf(GsMP))+' Inf.')
+                if np.isnan(GbMM).any():
+                    print('\t - GbMM contains '+np.count_nonzero(np.isnan(GbMM))+' NaN.')
+                if np.isinf(GbMM).any():
+                    print('\t - GbMM contains '+np.count_nonzero(np.isinf(GbMM))+' Inf.')
+                if np.isnan(GbPM).any():
+                    print('\t - GbPM contains '+np.count_nonzero(np.isnan(GbPM))+' NaN.')
+                if np.isinf(GbPM).any():
+                    print('\t - GbPM contains '+np.count_nonzero(np.isinf(GbPM))+' Inf.')
+            
+                print('\n')
+        
         # G to surface
-        
-        # Delete NaN's and limit inf's
-        GsPP = np.nan_to_num(GsPP)
-        GsMP = np.nan_to_num(GsMP) 
-        
-        # The highest negative frequency and highest negative wavenumber components are real-valued
-        GsPP[self.nf-1,:] = GsPP[self.nf-1,:].real
-        GsMP[self.nf-1,:] = GsMP[self.nf-1,:].real
         
         # Conjugate wavefields
         GsPP = GsPP.conj()
         GsMP = GsMP.conj()
         
-        GsMP,GsPP = self.Sort_w(GsMP,GsPP)
+        # Delete NaN's and limit inf's
+        GsPP = np.nan_to_num(GsPP)
+        GsMP = np.nan_to_num(GsMP) 
         
+        GsMP,GsPP = self.Sort_w(GsMP,GsPP)
         
         # Apply source - receiver reciprocity
         
@@ -1294,20 +1322,15 @@ class Layers_p_w(Wavefield_p_w):
         
         # G to bottom
         
-        # Delete NaN's and limit inf's
-        GbMM = np.nan_to_num(GbMM)
-        GbPM = np.nan_to_num(GbPM) 
-        
-        # The highest negative frequency and highest negative wavenumber components are real-valued
-        GbMM[self.nf-1,:] = GbMM[self.nf-1,:].real
-        GbPM[self.nf-1,:] = GbPM[self.nf-1,:].real
-        
         # Conjugate wavefields
         GbMM = GbMM.conj()
         GbPM = GbPM.conj()
         
-        GbPM,GbMM = self.Sort_w(GbPM,GbMM)
+        # Delete NaN's and limit inf's
+        GbMM = np.nan_to_num(GbMM)
+        GbPM = np.nan_to_num(GbPM)    
         
+        GbPM,GbMM = self.Sort_w(GbPM,GbMM)
         
         # Apply source - receiver reciprocity
         
