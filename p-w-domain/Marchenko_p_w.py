@@ -533,7 +533,6 @@ class Marchenko_p_w(Layers_p_w):
     # Compute initial focusing function using the forward-scattered transmission
     def F1plus0(self,p,zF,eps=0):
         """
-        In testing phase.
         self.F1P0,F1P0full = F1plus0(self,p,zF,eps)
         
         The initial focusing function (inverse forward-scattered transmission) is computed. No option for complex-valued frequencies.
@@ -544,8 +543,8 @@ class Marchenko_p_w(Layers_p_w):
             eps:      Choose complex-valued frequency. Default is eps=0, i.e. the frequency is real-valued.
            
         Outputs:
-            F1P0:       Initial focusing function (inverse forward-scattered transmission excluding internal multiples) only positive frequencies and wavenumbers.
-            F1P0full:   Initial focusing function (inverse forward-scattered transmission excluding internal multiples) all frequencies and wavenumbers.
+            F1P0:       Initial focusing function (inverse forward-scattered transmission excluding internal multiples) only positive frequencies.
+            F1P0full:   Initial focusing function (inverse forward-scattered transmission excluding internal multiples) all frequencies.
             
         """
         
@@ -573,6 +572,27 @@ class Marchenko_p_w(Layers_p_w):
             
             # Invert the transmission response
             self.F1P0 = self.My_inv(TP)
+            
+            # Verbose: Remove NaNs and Infs
+            if self.verbose == 1:
+                
+                if np.isnan(self.F1P0).any() or np.isinf(self.F1P0).any():
+                    print('\n')
+                    print('F1plus0:')
+                    print('\n'+100*'-'+'\n')
+                    print('At least one of the modelled wavefields contains a NaN (Not a Number) or an Inf (infinite) element. '+
+                          'In this step, NaN is replaced by zero, and infinity (-infinity) is replaced by the largest '+
+                          '(smallest or most negative) floating point value that fits in the output dtype. Also see '+
+                          'numpy.nan_to_num (in numpy or scipy documentation).')
+                    print('\n')
+                    
+                    if np.isnan(self.F1P0).any():
+                        print('\t - F1P0 contains '+np.count_nonzero(np.isnan(self.F1P0))+' NaN.')
+                    if np.isinf(self.F1P0).any():
+                        print('\t - F1P0 contains '+np.count_nonzero(np.isinf(self.F1P0))+' Inf.')
+                
+                    print('\n')
+            
             self.F1P0 = np.nan_to_num(self.F1P0)
             
             # Remove layer
@@ -580,6 +600,27 @@ class Marchenko_p_w(Layers_p_w):
             
         else:
             TP = self.My_inv(self.F1P0)
+            
+            # Verbose: Remove NaNs and Infs
+            if self.verbose == 1:
+                
+                if np.isnan(TP).any() or np.isinf(TP).any():
+                    print('\n')
+                    print('F1plus0:')
+                    print('\n'+100*'-'+'\n')
+                    print('At least one of the modelled wavefields contains a NaN (Not a Number) or an Inf (infinite) element. '+
+                          'In this step, NaN is replaced by zero, and infinity (-infinity) is replaced by the largest '+
+                          '(smallest or most negative) floating point value that fits in the output dtype. Also see '+
+                          'numpy.nan_to_num (in numpy or scipy documentation).')
+                    print('\n')
+                    
+                    if np.isnan(TP).any():
+                        print('\t - TP contains '+np.count_nonzero(np.isnan(TP))+' NaN.')
+                    if np.isinf(TP).any():
+                        print('\t - TP contains '+np.count_nonzero(np.isinf(TP))+' Inf.')
+                
+                    print('\n')
+                    
             TP = np.nan_to_num(TP)
     
         F1P0full,TPfull = self.Sort_w(self.F1P0,TP)
