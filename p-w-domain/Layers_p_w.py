@@ -1943,10 +1943,10 @@ class Layers_p_w(Wavefield_p_w):
             
         if check == 0:
             # Compute L block matrices
-            L1P = self.L1P_kx_w(cp,cs,ro,p)
-            L1M = self.L1M_kx_w(cp,cs,ro,p)
-            L2P = self.L2P_kx_w(cp,cs,ro,p)
-            L2M = self.L2M_kx_w(cp,cs,ro,p)
+            L1P = self.L1P_p_w(cp,cs,ro,p)
+            L1M = self.L1M_p_w(cp,cs,ro,p)
+            L2P = self.L2P_p_w(cp,cs,ro,p)
+            L2M = self.L2M_p_w(cp,cs,ro,p)
             
             # Compute N block matrices
             
@@ -1974,12 +1974,6 @@ class Layers_p_w(Wavefield_p_w):
         Gth = self.Mul_My_dot(L1M,GMM,N2M) + self.Mul_My_dot(L1P,GPM,N2M) + self.Mul_My_dot(L1M,GMP,N2P) + self.Mul_My_dot(L1P,GPP,N2P)
         Gvf = self.Mul_My_dot(L2M,GMM,N1M) + self.Mul_My_dot(L2P,GPM,N1M) + self.Mul_My_dot(L2M,GMP,N1P) + self.Mul_My_dot(L2P,GPP,N1P)
         Gvh = self.Mul_My_dot(L2M,GMM,N2M) + self.Mul_My_dot(L2P,GPM,N2M) + self.Mul_My_dot(L2M,GMP,N2P) + self.Mul_My_dot(L2P,GPP,N2P)
-        
-        # Is that solving the error of wmax?
-        Gtf[self.nf-1,:,:] = Gtf[self.nf-1,:,:].real
-        Gth[self.nf-1,:,:] = Gth[self.nf-1,:,:].real
-        Gvf[self.nf-1,:,:] = Gvf[self.nf-1,:,:].real
-        Gvh[self.nf-1,:,:] = Gvh[self.nf-1,:,:].real
         
         if (nt == self.nt):
             Gtf,Gth,Gvf,Gvh = self.Sort_w(Gtf,Gth,Gvf,Gvh)
