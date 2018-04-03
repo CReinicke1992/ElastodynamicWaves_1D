@@ -7,7 +7,7 @@ Created on Fri Dec  1 14:07:23 2017
 """
 
 import numpy as np
-import matplotlib.pylab as plt
+import matplotlib.pyplot as plt
 
 class Wavefield_p_w:
     """

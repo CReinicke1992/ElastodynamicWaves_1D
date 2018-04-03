@@ -7,7 +7,7 @@ Created on Fri Aug  4 13:27:28 2017
 """
 from Wavefield_p_w import Wavefield_p_w
 import numpy as np
-import matplotlib.pylab as plt
+import matplotlib.pyplot as plt
 
 
 # Responses of layered media are wavefields

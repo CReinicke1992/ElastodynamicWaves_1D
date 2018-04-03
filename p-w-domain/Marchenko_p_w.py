@@ -8,7 +8,7 @@ Created on Thu Aug 10 09:03:17 2017
 
 from Layers_p_w import Layers_p_w
 import numpy as np
-import matplotlib.pylab as plt
+import matplotlib.pyplot as plt
 from scipy import optimize
 
 # Focusing and Green's functions between a focal depth and 
